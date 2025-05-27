@@ -18,3 +18,86 @@ model User {
   email String  @unique
   name  String?
 }
+
+model Candidate {
+  id          String       @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String       @unique
+  phone       String
+  
+  // Dirección más estructurada
+  street      String?
+  city        String?
+  state       String?
+  postalCode  String?
+  country     String?
+  
+  cvFilePath  String?
+  
+  // Campos para extensiones futuras
+  status      String?      @default("pendiente") // pendiente, revisado, contactado, contratado, rechazado
+  tags        String[]     @default([])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  education   Education[]
+  experience  Experience[]
+  stages      RecruitmentStage[]
+
+  @@index([email]) // Índice para búsquedas por email
+  @@index([firstName, lastName]) // Índice para búsquedas por nombre
+  @@index([status]) // Índice para filtrado por estado
+}
+
+model Education {
+  id          String     @id @default(uuid())
+  institution String
+  title       String
+  degree      String?    // Por ejemplo: Licenciatura, Maestría, Doctorado
+  fieldOfStudy String?   // Campo de estudio
+  startDate   DateTime
+  endDate     DateTime
+  description String?    // Descripción opcional de estudios
+  candidate   Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@index([candidateId]) // Facilita consultas relacionadas
+}
+
+model Experience {
+  id          String     @id @default(uuid())
+  company     String
+  position    String
+  location    String?    // Ubicación del trabajo
+  startDate   DateTime
+  endDate     DateTime
+  currentJob  Boolean    @default(false) // Indica si es el trabajo actual
+  description String
+  achievements String[]  @default([]) // Logros destacados
+  skills      String[]   @default([]) // Habilidades demostradas en este trabajo
+  candidate   Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@index([candidateId]) // Facilita consultas relacionadas
+}
+
+// Modelo para seguimiento del proceso de selección
+model RecruitmentStage {
+  id          String    @id @default(uuid())
+  stageName   String    // Ej: Revisión CV, Entrevista inicial, Prueba técnica, Oferta
+  notes       String?   // Notas sobre la etapa
+  date        DateTime  @default(now())
+  status      String    // En proceso, Aprobado, Rechazado
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([candidateId])
+  @@index([stageName, status]) // Para filtrar por etapa y estado
+}
